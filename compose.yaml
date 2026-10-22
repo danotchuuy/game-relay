@@ -1,0 +1,38 @@
+# Sample Docker Compose setup for game-relay.
+#
+#   docker compose up -d            # build locally and start
+#   docker compose logs -f relay
+#
+# To run a published image instead of building, remove the `build:` line and
+# set `image:` to the tag you pushed (see `make docker-push`).
+
+services:
+  relay:
+    image: docker.io/danotchuuy/game-relay:latest
+    build: .
+    restart: unless-stopped
+    ports:
+      - "8080:8080" # clients connect to ws://<host>:8080/ws
+    # Every flag is optional; these show the defaults or common choices.
+    # Run the binary with -h for the full list.
+    command:
+      - -addr=:8080
+      - -max-players=64
+      - -default-max-players=8
+      - -max-lobbies=10000
+      - -rate=120
+      - -burst=240
+      # Only accept these game IDs (comma-separated). Remove to accept any.
+      # - -allowed-games=com.example.spacegame:v3,com.example.puzzle
+      # Restrict which browser origins may connect. "*" allows all.
+      - -origins=*
+    # For wss:// without a reverse proxy, mount a certificate and enable TLS:
+    # volumes:
+    #   - ./certs:/certs:ro
+    # command:
+    #   - -tls-cert=/certs/fullchain.pem
+    #   - -tls-key=/certs/privkey.pem
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    stop_grace_period: 15s # the relay drains connections for up to 10s on SIGTERM
